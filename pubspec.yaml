@@ -1,0 +1,41 @@
+name: spike_pictures_poc
+description: A new Flutter project.
+
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.5 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.2
+  google_ml_kit: ^0.16.1
+  bloc: ^8.1.2
+  flutter_bloc: ^8.1.3
+  meta: ^1.9.1
+  equatable: ^2.0.5
+  camera: ^0.10.5+2
+  image_picker: ^1.0.1
+  mrz_parser:
+    git:
+      url: https://github.com/tomasaquiles-ca/mrz_parser.git
+      ref: chore/deps-update
+  path_provider: ^2.0.15
+  # image: ^4.0.17
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/
+    - assets/tessdata/
