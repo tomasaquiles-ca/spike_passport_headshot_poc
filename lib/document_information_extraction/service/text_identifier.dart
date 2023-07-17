@@ -2,50 +2,65 @@ import 'dart:ui';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
-import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 class TextIdentifier {
+  static bool isScanning = false;
+
   static Future<RecognizedText> scanImage(
     CameraImage image,
     CameraDescription camera,
   ) async {
-    final WriteBuffer allBytes = WriteBuffer();
-
-    for (Plane plane in image.planes) {
-      allBytes.putUint8List(plane.bytes);
+    if (isScanning) {
+      throw Exception('Already scanning');
     }
 
-    final bytes = allBytes.done().buffer.asUint8List();
+    isScanning = true;
+    try {
+      final WriteBuffer allBytes = WriteBuffer();
 
-    final Size imageSize = Size(
-      image.width.toDouble(),
-      image.height.toDouble(),
-    );
+      for (Plane plane in image.planes) {
+        allBytes.putUint8List(plane.bytes);
+      }
 
-    final InputImageRotation imageRotation =
-        InputImageRotationValue.fromRawValue(camera.sensorOrientation) ??
-            InputImageRotation.rotation0deg;
+      final bytes = allBytes.done().buffer.asUint8List();
 
-    final InputImageFormat inputImageFormat =
-        InputImageFormatValue.fromRawValue(image.format.raw) ??
-            InputImageFormat.nv21;
+      final Size imageSize = Size(
+        image.width.toDouble(),
+        image.height.toDouble(),
+      );
 
-    final inputImageData = InputImageMetadata(
-      size: imageSize,
-      rotation: imageRotation,
-      format: inputImageFormat,
-      bytesPerRow: image.planes[0].bytesPerRow,
-    );
+      final InputImageRotation imageRotation =
+          InputImageRotationValue.fromRawValue(camera.sensorOrientation) ??
+              InputImageRotation.rotation0deg;
 
-    final inputImage = InputImage.fromBytes(
-      bytes: bytes,
-      metadata: inputImageData,
-    );
+      final InputImageFormat inputImageFormat =
+          InputImageFormatValue.fromRawValue(image.format.raw) ??
+              InputImageFormat.nv21;
 
-    return _detectText(inputImage);
+      final inputImageData = InputImageMetadata(
+        size: imageSize,
+        rotation: imageRotation,
+        format: inputImageFormat,
+        bytesPerRow: image.planes[0].bytesPerRow,
+      );
+
+      final inputImage = InputImage.fromBytes(
+        bytes: bytes,
+        metadata: inputImageData,
+      );
+
+      return _detectText(inputImage);
+    } catch (e) {
+      rethrow;
+    } finally {
+      isScanning = false;
+    }
   }
 
   static Future<RecognizedText> _detectText(InputImage inputImage) async {
-    return GoogleMlKit.vision.textRecognizer().processImage(inputImage);
+    return _recognizer.processImage(inputImage);
   }
+
+  static final _recognizer = TextRecognizer();
 }

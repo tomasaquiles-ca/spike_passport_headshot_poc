@@ -70,32 +70,40 @@ class _DocumentInformationExtractionViewState
 
   @override
   Widget build(BuildContext context) {
-    final state = context.select(
-      (DocumentInformationExtractionCubit cubit) => cubit.state,
-    );
+    return BlocConsumer<DocumentInformationExtractionCubit,
+        DocumentInformationExtractionState>(
+      builder: (context, state) {
+        if (state is DocumentInformationExtractionLoaded) {
+          return Scaffold(
+            persistentFooterButtons: [
+              ElevatedButton(
+                onPressed: () async {
+                  context.read<DocumentInformationExtractionCubit>().reset();
+                  await startImageSteam();
+                },
+                child: const Text('Scan again'),
+              ),
+            ],
+            body: Center(
+              child: Text(
+                stringifyMrz(state.result),
+              ),
+            ),
+          );
+        }
 
-    if (state is DocumentInformationExtractionLoaded) {
-      return Scaffold(
-        persistentFooterButtons: [
-          ElevatedButton(
-            onPressed: () {
-              context.read<DocumentInformationExtractionCubit>().reset();
-            },
-            child: const Text('Scan again'),
-          ),
-        ],
-        body: Center(
-          child: Text(
-            stringifyMrz(state.result),
-          ),
-        ),
-      );
-    }
-
-    return Scaffold(
-      body: (controller != null && controller!.value.isInitialized)
-          ? CameraPreview(controller!)
-          : const Center(child: CircularProgressIndicator()),
+        return Scaffold(
+          body: (controller != null && controller!.value.isInitialized)
+              ? CameraPreview(controller!)
+              : const Center(child: CircularProgressIndicator()),
+        );
+      },
+      listener: (context, state) async {
+        if (state is DocumentInformationExtractionLoaded &&
+            (controller?.value.isStreamingImages ?? false)) {
+          await controller?.stopImageStream();
+        }
+      },
     );
   }
 
@@ -115,12 +123,20 @@ class _DocumentInformationExtractionViewState
       return;
     }
 
-    final cubit = context.read<DocumentInformationExtractionCubit>();
-    controller?.startImageStream((image) {
-      cubit.extractInformation(image, description);
-    });
+    await startImageSteam();
 
     setState(() {});
+  }
+
+  Future<void> startImageSteam() async {
+    final cubit = context.read<DocumentInformationExtractionCubit>();
+    bool processing = false;
+    await controller?.startImageStream((image) async {
+      if (processing) return;
+      processing = true;
+      await cubit.extractInformation(image, controller!.description);
+      processing = false;
+    });
   }
 }
 
