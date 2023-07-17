@@ -66,11 +66,6 @@ void main() {
       ],
     ];
 
-    // final filtered = [
-    //   'P<USANEILSON<<DANE<CHRISTIAN<<<<<<<<<<<<<<<<',
-    //   '5326147613<SA6112309M2508223269990094<477004'
-    // ];
-
     const expectedFiltered = [
       'P<USANEILSON<<DANE<CHRISTIAN<<<<<<<<<<<<<<<<',
       '5326147613USA6112309M2508223269990094<477004',
