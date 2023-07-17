@@ -13,9 +13,14 @@ class MRZHelper {
     }
     List<String> firstLineChars = ableToScanTextList.first.split('');
     List<String> supportedDocTypes = ['A', 'C', 'P', 'V', 'I'];
+
     String fChar = firstLineChars[0];
+    String sChar = firstLineChars[1];
+
     if (supportedDocTypes.contains(fChar)) {
-      return [...ableToScanTextList];
+      if (sChar == '<' || RegExp(r'^[A-Z]$').hasMatch(sChar)) {
+        return ableToScanTextList;
+      }
     }
     return null;
   }
