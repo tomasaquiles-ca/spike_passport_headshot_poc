@@ -50,6 +50,15 @@ class DocumentInformationExtractionCubit
 
     try {
       final parsed = MRZParser.parse(parseableText);
+      if (parsed.givenNames.nullIfEmpty == null ||
+          parsed.surnames.nullIfEmpty == null) {
+        emit(DocumentInformationExtractionError(
+          'Unable to parse text',
+          parseableText.toString(),
+        ));
+        return;
+      }
+
       emit(DocumentInformationExtractionLoaded(parsed));
     } catch (e) {
       emit(DocumentInformationExtractionError(
