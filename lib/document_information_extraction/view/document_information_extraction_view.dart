@@ -1,7 +1,11 @@
+import 'dart:math';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
+import 'package:mrz_parser/mrz_parser.dart';
 import 'package:spike_pictures_poc/document_information_extraction/document_information_extraction.dart';
 import 'package:spike_pictures_poc/main.dart';
 
@@ -71,12 +75,6 @@ class _DocumentInformationExtractionViewState
     );
 
     if (state is DocumentInformationExtractionLoaded) {
-      final flag = state.result.countryCode.toUpperCase().replaceAllMapped(
-            RegExp(r'[A-Z]'),
-            (match) =>
-                String.fromCharCode(match.group(0)!.codeUnitAt(0) + 127397),
-          );
-
       return Scaffold(
         persistentFooterButtons: [
           ElevatedButton(
@@ -87,16 +85,8 @@ class _DocumentInformationExtractionViewState
           ),
         ],
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Names: ${state.result.givenNames}'),
-              Text('Surnames: ${state.result.surnames}'),
-              Text('Sex: ${state.result.sex.name}'),
-              Text('Country code: ${state.result.countryCode} $flag'),
-              Text('ID: ${state.result.documentNumber}'),
-              Text('Date of birth: ${state.result.birthDate}'),
-            ],
+          child: Text(
+            stringifyMrz(state.result),
           ),
         ),
       );
@@ -132,4 +122,60 @@ class _DocumentInformationExtractionViewState
 
     setState(() {});
   }
+}
+
+String stringifyMrz(MRZResult result) {
+  final nationalityFlag = result.nationalityCountryCode.nullIfEmpty
+      ?.substring(0, min(2, result.nationalityCountryCode.length))
+      .toUpperCase()
+      .replaceAllMapped(
+        RegExp(r'[A-Z]'),
+        (match) => String.fromCharCode(match.group(0)!.codeUnitAt(0) + 127397),
+      );
+
+  final flag = result.countryCode
+      .substring(0, min(2, result.nationalityCountryCode.length))
+      .toUpperCase()
+      .replaceAllMapped(
+        RegExp(r'[A-Z]'),
+        (match) => String.fromCharCode(match.group(0)!.codeUnitAt(0) + 127397),
+      );
+
+  final dateFormat = DateFormat('dd/MM/yyyy');
+
+  return '''
+Names: ${result.givenNames.capitalize().orElse('N/A')}
+Surnames: ${result.surnames.capitalize().orElse('N/A')}
+Birthdate: ${dateFormat.format(result.birthDate)}
+Nationality Country Code: ${result.nationalityCountryCode} $nationalityFlag
+Country Code: ${result.countryCode} $flag
+Document Number: ${result.documentNumber.orElse('N/A')}
+Personal Number: ${result.personalNumber.orElse('N/A')}
+Personal Number 2: ${result.personalNumber2.orElse('N/A')}
+Expiry Date 2: ${dateFormat.format(result.expiryDate)}
+Sex: ${result.sex.name.capitalize()}
+          ''';
+}
+
+extension OrElse on String? {
+  String? orElse(String defaultValue) {
+    if (this == null) return defaultValue;
+    return (this?.isEmpty ?? true) ? defaultValue : this;
+  }
+}
+
+extension Capitalize on String {
+  String? capitalize() {
+    if (nullIfEmpty == null) return null;
+    final spaceSplit = trim().split(' ');
+    return spaceSplit
+        .map((e) => e.isEmpty
+            ? null
+            : e[0].toUpperCase() + e.substring(1).toLowerCase())
+        .join(' ');
+  }
+}
+
+extension NullIfEmpty on String {
+  String? get nullIfEmpty => trim().isEmpty ? null : this;
 }

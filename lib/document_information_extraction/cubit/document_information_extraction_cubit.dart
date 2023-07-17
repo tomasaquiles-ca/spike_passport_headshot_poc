@@ -41,8 +41,9 @@ class DocumentInformationExtractionCubit
 
     List<String> ableToScanText = [];
     for (var e in allText) {
-      if (MRZHelper.testTextLine(e).isNotEmpty) {
-        ableToScanText.add(MRZHelper.testTextLine(e));
+      final testLine = MRZHelper.testTextLine(e);
+      if (testLine.isNotEmpty) {
+        ableToScanText.add(testLine);
       }
     }
     List<String>? parseableText = MRZHelper.getFinalListToParse(ableToScanText);
